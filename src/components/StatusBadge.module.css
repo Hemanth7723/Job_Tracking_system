@@ -1,0 +1,16 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 11px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.applied   { background: var(--info-bg);    color: var(--info); }
+.interview { background: var(--warn-bg);    color: var(--warn); }
+.offer     { background: var(--success-bg); color: var(--success); }
+.rejected  { background: var(--danger-bg);  color: var(--danger); }
+.withdrawn { background: var(--bg-3);       color: var(--text-muted); }
+.ghosted   { background: var(--bg-3);       color: var(--text-hint); }

@@ -1,0 +1,115 @@
+[
+  {
+    "name": "jobs",
+    "type": "base",
+    "system": false,
+    "schema": [
+      {
+        "name": "user",
+        "type": "relation",
+        "required": true,
+        "unique": false,
+        "options": {
+          "collectionName": "users",
+          "cascadeDelete": true,
+          "maxSelect": 1
+        }
+      },
+      {
+        "name": "company_name",
+        "type": "text",
+        "required": true,
+        "unique": false,
+        "options": {
+          "min": 1,
+          "max": 200
+        }
+      },
+      {
+        "name": "role_name",
+        "type": "text",
+        "required": true,
+        "unique": false,
+        "options": {
+          "min": 1,
+          "max": 200
+        }
+      },
+      {
+        "name": "job_link",
+        "type": "url",
+        "required": false,
+        "unique": false,
+        "options": {}
+      },
+      {
+        "name": "resume_file",
+        "type": "file",
+        "required": false,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "maxSize": 5242880,
+          "mimeTypes": ["application/pdf"]
+        }
+      },
+      {
+        "name": "status",
+        "type": "select",
+        "required": true,
+        "unique": false,
+        "options": {
+          "maxSelect": 1,
+          "values": [
+            "Applied",
+            "Interview",
+            "Offer",
+            "Rejected",
+            "Withdrawn",
+            "Ghosted"
+          ]
+        }
+      },
+      {
+        "name": "location",
+        "type": "text",
+        "required": false,
+        "unique": false,
+        "options": {
+          "max": 200
+        }
+      },
+      {
+        "name": "ctc",
+        "type": "text",
+        "required": false,
+        "unique": false,
+        "options": {
+          "max": 50
+        }
+      },
+      {
+        "name": "rating",
+        "type": "number",
+        "required": false,
+        "unique": false,
+        "options": {
+          "min": 1,
+          "max": 5
+        }
+      },
+      {
+        "name": "notes",
+        "type": "editor",
+        "required": false,
+        "unique": false,
+        "options": {}
+      }
+    ],
+    "listRule":   "@request.auth.id = user",
+    "viewRule":   "@request.auth.id = user",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id = user",
+    "deleteRule": "@request.auth.id = user"
+  }
+]

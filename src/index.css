@@ -1,0 +1,111 @@
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,400&display=swap');
+
+/* ─── Design tokens ─── */
+:root {
+  --bg:          #ffffff;
+  --bg-2:        #f5f5f3;
+  --bg-3:        #ebebea;
+  --bg-tertiary: #f0efed;
+  --border:      rgba(0, 0, 0, 0.12);
+  --border-2:    rgba(0, 0, 0, 0.18);
+  --text:        #1a1a18;
+  --text-muted:  #6b6b67;
+  --text-hint:   #9c9c97;
+
+  /* Semantic */
+  --info:        #185FA5;
+  --info-bg:     #E6F1FB;
+  --success:     #3B6D11;
+  --success-bg:  #EAF3DE;
+  --warn:        #854F0B;
+  --warn-bg:     #FAEEDA;
+  --danger:      #A32D2D;
+  --danger-bg:   #FCEBEB;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:          #1c1c1a;
+    --bg-2:        #242422;
+    --bg-3:        #2c2c2a;
+    --bg-tertiary: #161614;
+    --border:      rgba(255, 255, 255, 0.1);
+    --border-2:    rgba(255, 255, 255, 0.15);
+    --text:        #f0efed;
+    --text-muted:  #9c9c97;
+    --text-hint:   #6b6b67;
+
+    --info:        #85B7EB;
+    --info-bg:     rgba(55, 138, 221, 0.15);
+    --success:     #97C459;
+    --success-bg:  rgba(99, 153, 34, 0.15);
+    --warn:        #EF9F27;
+    --warn-bg:     rgba(186, 117, 23, 0.15);
+    --danger:      #F09595;
+    --danger-bg:   rgba(163, 45, 45, 0.15);
+  }
+}
+
+/* ─── Reset ─── */
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 14px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  background: var(--bg-tertiary);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+/* ─── Typography ─── */
+h1, h2, h3, h4 {
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+a {
+  color: inherit;
+}
+
+/* ─── Form defaults ─── */
+input, select, textarea, button {
+  font-family: inherit;
+  font-size: inherit;
+}
+
+select {
+  cursor: pointer;
+}
+
+/* ─── Scrollbar ─── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-2);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-hint);
+}
+
+/* ─── Focus ring ─── */
+:focus-visible {
+  outline: 2px solid var(--info);
+  outline-offset: 2px;
+}
