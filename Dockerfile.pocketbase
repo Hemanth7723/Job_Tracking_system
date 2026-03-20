@@ -1,0 +1,42 @@
+# ─────────────────────────────────────────────
+# PocketBase backend
+# Runs as a standalone binary — no build step needed.
+# ─────────────────────────────────────────────
+FROM alpine:3.19
+
+# Install ca-certificates so PocketBase can make HTTPS calls,
+# and unzip for extracting the release archive.
+RUN apk add --no-cache \
+    ca-certificates \
+    unzip \
+    wget
+
+# PocketBase version — update this to the latest release as needed.
+# Check: https://github.com/pocketbase/pocketbase/releases
+ARG PB_VERSION=0.22.14
+
+# Download the correct binary for the container's architecture.
+# Railway runs on linux/amd64; the ARG lets you override for arm64 if needed.
+ARG PB_ARCH=linux_amd64
+
+RUN wget -q \
+    "https://github.com/pocketbase/pocketbase/releases/download/v${PB_VERSION}/pocketbase_${PB_VERSION}_${PB_ARCH}.zip" \
+    -O /tmp/pocketbase.zip && \
+    unzip /tmp/pocketbase.zip -d /pb/ && \
+    rm /tmp/pocketbase.zip && \
+    chmod +x /pb/pocketbase
+
+# pb_data is where PocketBase stores its SQLite database, uploaded files,
+# and logs. This directory MUST be mounted to a persistent volume in Railway
+# (Settings → Volumes → Mount Path: /pb/pb_data) otherwise all data is
+# lost every time the container restarts.
+VOLUME /pb/pb_data
+
+WORKDIR /pb
+
+# Railway assigns a dynamic port via $PORT.
+# PocketBase's --http flag binds to that port.
+# Default to 8090 for local Docker testing.
+EXPOSE 8090
+
+CMD ["sh", "-c", "./pocketbase serve --http=0.0.0.0:${PORT:-8090} --dir=/pb/pb_data"]
