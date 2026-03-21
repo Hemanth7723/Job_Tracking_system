@@ -30,7 +30,7 @@ RUN wget -q \
 # and logs. This directory MUST be mounted to a persistent volume in Railway
 # (Settings → Volumes → Mount Path: /pb/pb_data) otherwise all data is
 # lost every time the container restarts.
-VOLUME /pb/pb_data
+# VOLUME /pb/pb_data
 
 WORKDIR /pb
 
