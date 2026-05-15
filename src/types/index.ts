@@ -8,18 +8,20 @@ export type JobStatus =
 
 export interface Job {
   id: string
-  user_id: string          // matches Supabase column name
+  collectionId: string     // always present on PocketBase records — used by pb.files.getUrl()
+  collectionName: string
+  user: string             // direct user ID — schema rule: @request.auth.id = user
   company_name: string
   role_name: string
   job_link?: string
-  resume_file?: string     // path in Supabase storage
+  resume_file?: string     // filename stored by PocketBase files API
   status: JobStatus
   location?: string
   ctc?: string
   rating?: number
   notes?: string
-  created_at: string
-  updated_at: string
+  created: string
+  updated: string
 }
 
 export interface JobFormData {
