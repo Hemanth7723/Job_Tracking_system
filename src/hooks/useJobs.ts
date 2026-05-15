@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react'
-import { supabase } from '../lib/supabase'
+import { pb } from '../lib/pb'
 import type { Job, JobFormData } from '../types'
 
 export function useJobs() {
@@ -17,33 +17,35 @@ export function useJobs() {
     setLoading(true)
     setError(null)
     try {
-      let query = supabase
-        .from('jobs')
-        .select('*', { count: 'exact' })
+      const filters: string[] = []
 
+      // Schema rule: @request.auth.id = user  (direct field comparison, no .id suffix)
+      // PocketBase enforces this server-side — we don't need to add a user filter here.
+      // Additional client-side filters:
       if (options?.status) {
-        query = query.eq('status', options.status)
+        filters.push(`status = "${options.status}"`)
       }
       if (options?.location) {
-        query = query.ilike('location', `%${options.location}%`)
+        // Escape quotes to prevent filter injection
+        const loc = options.location.replace(/"/g, '\\"')
+        filters.push(`location = "${loc}"`)
       }
       if (options?.search) {
-        query = query.or(`company_name.ilike.%${options.search}%,role_name.ilike.%${options.search}%`)
+        const q = options.search.replace(/"/g, '\\"')
+        filters.push(`(company_name ~ "${q}" || role_name ~ "${q}")`)
       }
 
-      const page = options?.page || 1
-      const perPage = options?.perPage || 50
-      const from = (page - 1) * perPage
-      const to = from + perPage - 1
+      const result = await pb.collection('jobs').getList<Job>(
+        options?.page || 1,
+        options?.perPage || 50,
+        {
+          filter: filters.length > 0 ? filters.join(' && ') : '',
+          sort: '-created',
+        }
+      )
 
-      const { data, error, count } = await query
-        .order('created_at', { ascending: false })
-        .range(from, to)
-
-      if (error) throw error
-
-      setJobs(data as Job[])
-      return { items: data as Job[], total: count || 0 }
+      setJobs(result.items)
+      return result
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Failed to load jobs'
       setError(msg)
@@ -53,109 +55,57 @@ export function useJobs() {
     }
   }, [])
 
-  const uploadResume = async (file: File) => {
-    const user = (await supabase.auth.getUser()).data.user
-    if (!user) throw new Error('Not authenticated')
-
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${user.id}/${Math.random()}.${fileExt}`
-    const filePath = `${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('resumes')
-      .upload(filePath, file)
-
-    if (uploadError) throw uploadError
-    return filePath
-  }
-
   const createJob = async (data: JobFormData) => {
-    const user = (await supabase.auth.getUser()).data.user
-    if (!user) throw new Error('Not authenticated')
+    const formData = new FormData()
+    // user field: direct auth user ID — matches schema relation to "users" collection
+    formData.append('user', pb.authStore.model!.id)
+    formData.append('company_name', data.company_name)
+    formData.append('role_name', data.role_name)
+    formData.append('job_link', data.job_link)
+    formData.append('status', data.status)
+    formData.append('location', data.location)
+    formData.append('ctc', data.ctc)
+    if (data.rating) formData.append('rating', data.rating)
+    formData.append('notes', data.notes)
+    if (data.resume_file) formData.append('resume_file', data.resume_file)
 
-    let resumePath = undefined
-    if (data.resume_file) {
-      resumePath = await uploadResume(data.resume_file)
-    }
-
-    const { data: job, error } = await supabase
-      .from('jobs')
-      .insert({
-        user_id: user.id,
-        company_name: data.company_name,
-        role_name: data.role_name,
-        job_link: data.job_link,
-        status: data.status,
-        location: data.location,
-        ctc: data.ctc,
-        rating: data.rating ? parseInt(data.rating) : null,
-        notes: data.notes,
-        resume_file: resumePath,
-      })
-      .select()
-      .single()
-
-    if (error) throw error
-    return job
+    return pb.collection('jobs').create<Job>(formData)
   }
 
   const updateJob = async (id: string, data: JobFormData) => {
-    let resumePath = undefined
-    if (data.resume_file) {
-      resumePath = await uploadResume(data.resume_file)
-    }
+    const formData = new FormData()
+    // Note: do NOT re-send 'user' on update — the rule @request.auth.id = user
+    // already ensures only the owner can update. Re-sending it is harmless but unnecessary.
+    formData.append('company_name', data.company_name)
+    formData.append('role_name', data.role_name)
+    formData.append('job_link', data.job_link)
+    formData.append('status', data.status)
+    formData.append('location', data.location)
+    formData.append('ctc', data.ctc)
+    // Send empty string to clear rating if unset; PocketBase treats '' as null for number fields
+    formData.append('rating', data.rating || '')
+    formData.append('notes', data.notes)
+    if (data.resume_file) formData.append('resume_file', data.resume_file)
 
-    const updateData: any = {
-      company_name: data.company_name,
-      role_name: data.role_name,
-      job_link: data.job_link,
-      status: data.status,
-      location: data.location,
-      ctc: data.ctc,
-      rating: data.rating ? parseInt(data.rating) : null,
-      notes: data.notes,
-    }
-
-    if (resumePath) {
-      updateData.resume_file = resumePath
-    }
-
-    const { data: job, error } = await supabase
-      .from('jobs')
-      .update(updateData)
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) throw error
-    return job
+    return pb.collection('jobs').update<Job>(id, formData)
   }
 
   const deleteJob = async (id: string) => {
-    const { error } = await supabase
-      .from('jobs')
-      .delete()
-      .eq('id', id)
-
-    if (error) throw error
+    return pb.collection('jobs').delete(id)
   }
 
   const getResumeUrl = (job: Job): string | null => {
     if (!job.resume_file) return null
-    const { data } = supabase.storage
-      .from('resumes')
-      .getPublicUrl(job.resume_file)
-    return data.publicUrl
+    // pb.files.getUrl works with the record object directly.
+    // collectionId is auto-populated by PocketBase SDK on every fetched record.
+    return pb.files.getUrl(job, job.resume_file)
   }
 
   const getStats = useCallback(async () => {
-    const { data, error } = await supabase
-      .from('jobs')
-      .select('*')
-
-    if (error) throw error
-
-    const all = data as Job[]
+    // getFullList fetches all records — server rules ensure only current user's records come back
+    const all = await pb.collection('jobs').getFullList<Job>({
+      sort: '-created',
+    })
     const stats = {
       total: all.length,
       applied: 0,
