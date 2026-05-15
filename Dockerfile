@@ -8,15 +8,17 @@ WORKDIR /app
 # Copy package files
 COPY package.json package-lock.json* ./
 
-# ✅ FIX 1: Use npm install instead of npm ci (avoids peer dependency crash)
+# Use npm install
 RUN npm install
 
 # Copy source
 COPY . .
 
-# ✅ Build-time env variable
-ARG VITE_PB_URL
-ENV VITE_PB_URL=${VITE_PB_URL}
+# Build-time env variables for Supabase
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+ENV VITE_SUPABASE_URL=${VITE_SUPABASE_URL}
+ENV VITE_SUPABASE_ANON_KEY=${VITE_SUPABASE_ANON_KEY}
 
 # Build app
 RUN npm run build
