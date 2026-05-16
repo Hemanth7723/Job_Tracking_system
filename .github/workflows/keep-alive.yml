@@ -1,0 +1,16 @@
+name: Keep Supabase Alive
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    container: curlimages/curl
+    steps:
+      - name: Ping Supabase health
+        run: |
+          curl -f https://fhefiqxqmqfaiicgcgqf.supabase.co/auth/v1/health \
+            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}"
