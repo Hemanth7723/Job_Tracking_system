@@ -63,21 +63,30 @@ export default function Dashboard() {
   const closeModal = () => { setModalOpen(false); setEditingJob(null) }
 
   const handleSave = async (data: JobFormData) => {
-    if (editingJob) {
-      await updateJob(editingJob.id, data)
-      showToast('Application updated')
-    } else {
-      await createJob(data)
-      showToast('Application added')
+    try {
+      if (editingJob) {
+        await updateJob(editingJob.id, data)
+        showToast('Application updated')
+      } else {
+        await createJob(data)
+        showToast('Application added')
+      }
+      load()
+    } catch (err: any) {
+      console.error(err)
+      showToast(err.message || 'Error saving application')
     }
-    load()
   }
 
   const handleDelete = async (job: Job) => {
     if (!confirm(`Delete application for ${job.role_name} at ${job.company_name}?`)) return
-    await deleteJob(job.id)
-    showToast('Application deleted')
-    load()
+    try {
+      await deleteJob(job.id)
+      showToast('Application deleted')
+      load()
+    } catch (err: any) {
+      showToast(err.message || 'Error deleting application')
+    }
   }
 
   const initials = user?.name?.split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2) || '?'
@@ -182,7 +191,7 @@ export default function Dashboard() {
                         <td className={styles.ellipsis}>{job.location || '—'}</td>
                         <td><StatusBadge status={job.status} /></td>
                         <td>{job.ctc ? `${job.ctc} LPA` : '—'}</td>
-                        <td>{new Date(job.created).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
+                        <td>{new Date(job.created_at).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</td>
                         <td>
                           <div className={styles.actions}>
                             <button className={styles.actionBtn} onClick={() => openEdit(job)} title="Edit">✎</button>
