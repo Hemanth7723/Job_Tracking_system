@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react'
-import { pb } from '../lib/pb'
+import { supabase } from '../lib/supabase'
 import type { AuthUser } from '../types'
 
 interface AuthContextType {
@@ -17,41 +17,72 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // Restore session from PocketBase authStore
-    if (pb.authStore.isValid && pb.authStore.model) {
-      const m = pb.authStore.model
-      setUser({ id: m.id, email: m.email, name: m.name })
-    }
-    setLoading(false)
+    // Check initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || ''
+        })
+      }
+      setLoading(false)
+    })
 
-    const unsub = pb.authStore.onChange((_token, model) => {
-      if (model) {
-        setUser({ id: model.id, email: model.email, name: model.name })
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser({
+          id: session.user.id,
+          email: session.user.email!,
+          name: session.user.user_metadata.name || session.user.email?.split('@')[0] || ''
+        })
       } else {
         setUser(null)
       }
+      setLoading(false)
     })
 
-    return () => unsub()
+    return () => subscription.unsubscribe()
   }, [])
 
   const login = async (email: string, password: string) => {
-    const res = await pb.collection('users').authWithPassword(email, password)
-    setUser({ id: res.record.id, email: res.record.email, name: res.record.name })
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+    if (error) throw error
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+        name: data.user.user_metadata.name || data.user.email?.split('@')[0] || ''
+      })
+    }
   }
 
   const register = async (name: string, email: string, password: string) => {
-    await pb.collection('users').create({
-      name,
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
-      passwordConfirm: password,
+      options: {
+        data: {
+          name,
+        },
+      },
     })
-    await login(email, password)
+    if (error) throw error
+    if (data.user) {
+      setUser({
+        id: data.user.id,
+        email: data.user.email!,
+        name: name
+      })
+    }
   }
 
-  const logout = () => {
-    pb.authStore.clear()
+  const logout = async () => {
+    await supabase.auth.signOut()
     setUser(null)
   }
 
