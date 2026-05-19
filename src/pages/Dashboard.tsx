@@ -102,7 +102,7 @@ export default function Dashboard() {
             <div className={styles.avatar}>{initials}</div>
             <span>{firstName}</span>
           </div>
-          <button className={styles.btnSm} onClick={logout}>Sign out</button>
+          <button className={styles.btnSm} onClick={() => logout()}>Sign out</button>
         </div>
       </header>
 

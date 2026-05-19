@@ -126,3 +126,13 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+.message {
+  color: var(--text);
+  background: var(--bg-2);
+  border: 0.5px solid var(--border-2);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  margin-bottom: 1rem;
+}

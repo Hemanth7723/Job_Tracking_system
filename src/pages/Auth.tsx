@@ -1,5 +1,5 @@
-import { useState, FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useState, FormEvent, useEffect } from 'react'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import styles from './Auth.module.css'
 
@@ -9,13 +9,23 @@ export default function AuthPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
+  const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const { login, register } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search)
+    if (params.get('expired') === 'true') {
+      setMessage('Your session has expired. Please sign in again.')
+    }
+  }, [location])
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault()
     setError('')
+    setMessage('')
     setLoading(true)
     try {
       if (tab === 'login') {
@@ -49,14 +59,14 @@ export default function AuthPage() {
         <div className={styles.tabs}>
           <button
             className={`${styles.tab} ${tab === 'login' ? styles.active : ''}`}
-            onClick={() => { setTab('login'); setError('') }}
+            onClick={() => { setTab('login'); setError(''); setMessage('') }}
             type="button"
           >
             Sign in
           </button>
           <button
             className={`${styles.tab} ${tab === 'register' ? styles.active : ''}`}
-            onClick={() => { setTab('register'); setError('') }}
+            onClick={() => { setTab('register'); setError(''); setMessage('') }}
             type="button"
           >
             Register
@@ -97,6 +107,7 @@ export default function AuthPage() {
             />
           </div>
 
+          {message && <p className={styles.message}>{message}</p>}
           {error && <p className={styles.error}>{error}</p>}
 
           <button className={styles.submitBtn} type="submit" disabled={loading}>
