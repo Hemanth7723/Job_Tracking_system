@@ -13,4 +13,4 @@ jobs:
       - name: Ping Supabase health
         run: |
           curl -f https://fhefiqxqmqfaiicgcgqf.supabase.co/rest/v1/health_check?select=id&limit=1 \
-            -H "apikey: ${{ secrets.SUPABASE_ANON_KEY }}"
+            -H "apikey: ${{ secrets.SUPABASE_SERVICE_ROLE }}"
